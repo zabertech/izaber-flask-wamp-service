@@ -1,0 +1,74 @@
+@import "../../node_modules/nvd3/build/nv.d3.min.css";
+@import "../../node_modules/semantic-ui-offline/semantic.min.css";
+@import "../../node_modules/@fortawesome/fontawesome-free/css/all.min.css";
+@import "../../node_modules/fullcalendar/dist/fullcalendar.css";
+@import "../../node_modules/xterm/dist/xterm.css";
+
+#dashboard-main-menu-icon {
+    z-index: 551;
+}
+#dashboard-main-menu-container {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 550;
+    background-color: rgba(0, 0, 0, .90);
+    padding: 64px;
+}
+#dashboard-main-menu-container.visible {
+    left: 0;
+}
+#dashboard-main-menu-item {
+    cursor: pointer;
+}
+#dashboard-help .item {
+    cursor: pointer;
+}
+.ui.inverted.menu .popup .item {
+    color: rgba(0, 0, 0, 0.87);
+}
+.ui.inverted.menu .popup a.item:hover,
+.ui.inverted.menu .popup .link.item:hover {
+    color: rgba(0, 0, 0, 0.95);
+}
+
+.ui.inverted.grey.menu .popup .item:before {
+    background-color: transparent;
+}
+
+.centered.zaber-logo {
+    margin: 0 auto 0.5rem;
+}
+.large.zaber-logo {
+    font-size: 4rem;
+}
+.medium.zaber-logo {
+    font-size: 2rem;
+}
+.small.zaber-logo {
+    font-size: 1.5rem;
+}
+.zaber-logo {
+    height: 3em;
+    width: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1.5em;
+    background-color: #eee;
+}
+.inverted.zaber-logo {
+    background-color: rgb(219, 40, 40);
+}
+.inverted.zaber-logo span {
+    color: #ddd;
+}
+.zaber-logo span {
+    text-transform: to-upper;
+    color: rgb(219, 40, 40);
+    font-size: 2em;
+    font-family: Impact, Helvetica, sans-serif;
+}
+
