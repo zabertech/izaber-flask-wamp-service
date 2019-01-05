@@ -1,247 +1,12 @@
 <html>
   <head>
     <script type="text/javascript" src="/static/bundle/bundle.js"></script>
+    <title>Sample Website</title>
     <style>
       h2 {
         padding-bottom: .5em;
       }
-
-      // Acquired from: https://codepen.io/wabeshew/pen/XdbBdM
-      // Processed into plain old css
-
-      .bounceball {
-        position: relative;
-        display: inline-block;
-        height: 37px;
-        width: 15px;
-      }
-      .bounceball:before {
-        position: absolute;
-        content: "";
-        display: block;
-        top: 0;
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        background-color: #D32024;
-        transform-origin: 50%;
-        animation: bounce 500ms alternate infinite ease;
-      }
-      .bounceballtext {
-        display: inline-block;
-        color: #D32024;
-        margin-left: 20px;
-      }
-      @keyframes bounce {
-        0% {
-          top: 20px;
-          height: 5px;
-          border-radius: 60px 60px 20px 20px;
-          transform: scaleX(2);
-        }
-        35% {
-          height: 15px;
-          border-radius: 50%;
-          transform: scaleX(1);
-        }
-        100% {
-          top: 0;
-        }
-      }
     </style>
-
-{% raw %}
-<script id="payslipListTemplate" type="text/x-handlebars-template">
-
-<div class="ui center aligned grid">
-  <div class="row">
-    <div class="centered eight wide column">
-      <h3 class="ui center aligned icon header" style="padding: 0;" >Payrun Period: {{data.run_period_combined}}</h3>
-      <p>
-        This payrun contains the following {{data.payslips.length}} payslips.
-      </p>
-      <button id="runButton" class="ui button" onclick="return doPayrollComplete(this,{{data.id}})">
-        <i class="play icon"></i>
-        Start Running Completion
-      </button>
-    </div>
-  </div>
-</div>
-
-<table class="ui celled table" id="payslipList">
-  <tbody>
-    {{#each data.payslips}}
-      <tr data-id="{{id}}" class="payslipRow" id="payslipID{{id}}">
-        <td>{{name}}</td>
-        <td>{{state}}</td>
-        <td>
-          <span class="payslipStatus">Queued</span>
-          <div style="position:relative;display:inline-block;opacity:0" class="payslipLoader">
-            <div class="bounceball"></div>
-            <div class="bounceballtext">Processing...</div>
-          </div>
-        </td>
-      </tr>
-    {{/each}}
-  </tbody>
-</table>
-</script>
-
-<script id="loaderBounceyTemplate" type="text/x-handlebars-template">
-<div style="position:relative;display:inline">
-  <div class="bounceball"></div>
-  <div class="bounceballtext">{{message}}</div>
-</div>
-</script>
-
-<script id="templateViewCalculationDetails" type="text/x-nunjucks-template">
-  {% if has_warnings %}
-    <i class="exclamation circle icon"></i>
-  {% endif %}
-  Worked: {{ worked_hours }}h. Avg {{ average_hours }}h per day.
-  <a href="javascript:doPayslipDetails(this,{{payslip_id}})">
-    Review Details
-  </a>
-</script>
-
-<script id="templatePayslipCalculationDetails" type="text/x-nunjucks-template">
-  <div class="header">Payrun {{name}}</div>
-  <div class="scrolling content" id="calculationDetails{{payslip_id}}">
-
-    <div class="ui top attached tabular menu">
-      <a class="active item" data-tab="overview">Overview</a>
-      <a class="item" data-tab="summary">Averaging Summary Data</a>
-      {% if has_amendments %}
-        <a class="item" data-tab="amendments">Amendments</a>
-      {% endif %}
-      <a class="item" data-tab="lines">Averaging Payslip Lines</a>
-    </div>
-
-    <div class="ui bottom attached active tab segment" data-tab="overview">
-      <p>
-        During this time the script observed:
-        <ul>
-          <li>Stat days: {{ stat_day_count }}</li>
-          <li>Sick days: {{ sick_day_count }}</li>
-          <li>Bereavement days: {{ bereavement_day_count }}</li>
-          <li>WoV days: {{ wov_day_count }}</li>
-          <li>PTO days: {{ pto_day_count }}</li>
-          <li>Sub days: {{ sub_day_count }}</li>
-          <li>STD days: {{ std_day_count }}</li>
-          <li>WCB days: {{ wcb_day_count }}</li>
-        </ul>
-      </p>
-      <p>
-        The script calculated an average work day of {{ average_hours }} hours per day.
-      </p>
-      <p>
-        {{ emp_name }} worked {{ worked_hours }} hours from {{ avg_date_from }}
-        to {{ avg_date_to}}.
-        In that time there were {{ adjusted_expected_day_count }}
-          days<sup title="All possible days of work minus WoV, PTO, Sick, WCB, STD, Sub and Bereavement">1</sup> of possible work.
-        This script counted that this employee worked {{ count_day_count }}
-          days<sup title="Reg/OT days ignoring days with WoV, PTO, Sick, WCB, STD, Sub and Bereavement" >2</sup>.
-        Using the smaller number ({{average_divisor}} days) as the divisor, this yielded the average hours for
-          this employee of {{ average_hours }} hours per day.
-      </p>
-      <p>
-        <sup>1</sup> All possible days of work subtracted by WoV, PTO, Sick, WCB, STD, Sub and Bereavement<br/>
-        <sup>2</sup> Counting days with Reg/OT time entries while ignoring days with WoV and Sick
-      </p>
-    </div>
-
-    <div class="ui bottom attached tab segment" data-tab="summary">
-      <h3>Average Day Calculation Details
-      <button type="button" class="mini ui button" onclick="return downloadSummary('summary{{payslip_id}}','{{date_to}}-{{emp_name}}-summary.csv')">Download CSV</button>
-      </h3>
-      {% if has_warnings %}
-        <h3>Warnings
-        <button type="button" class="mini ui button" onclick="return downloadSummary('warnings{{payslip_id}}','{{date_to}}-{{emp_name}}-warnings.csv')">Download CSV</button>
-        </h3>
-        <div id="warnings{{payslip_id}}"></div>
-      {% endif %}
-      <div id="summary{{payslip_id}}"></div>
-    </div>
-
-    {% if has_amendments %}
-      <div class="ui bottom attached tab segment" data-tab="amendments">
-        <h3>Potential Changes to Timesheet Lines
-        <button type="button" class="mini ui button" onclick="return downloadSummary('amendments{{payslip_id}}','{{date_to}}-{{emp_name}}-amendments.csv')">Download CSV</button>
-        </h3>
-        <div id="amendments{{payslip_id}}"></div>
-      </div>
-    {% endif %}
-
-    <div class="ui bottom attached tab segment" data-tab="lines">
-      <h3>Analytic Lines for Average Day Calculation
-      <button type="button" class="mini ui button" onclick="return downloadSummary('analytics{{payslip_id}}','{{date_to}}-{{emp_name}}-summary.csv')">Download CSV</button>
-      </h3>
-      <div style="position:relative">
-      <div id="analytics{{payslip_id}}"></div>
-      </div>
-    </div>
-
-  </div>
-</script>
-
-<script id="templatePayrunCalculationDetails" type="text/x-nunjucks-template">
-  {% if has_warnings %}
-  <h3>Warnings from timesheets
-  <button type="button" class="mini ui button" onclick="return downloadWarnings('payrunTimesheetWarnings','{{date_to}}-warnings.csv')">Download CSV</button>
-  </h3>
-  <div id="payrunTimesheetWarnings"></div>
-  {% endif %}
-
-  <h3>Summary of timesheets
-  <button type="button" class="mini ui button" onclick="return downloadSummary('payrunTimesheetSummary','{{date_to}}-summary.csv')">Download CSV</button>
-  </h3>
-  <div id="payrunTimesheetSummary"></div>
-
-  {% if has_amendments %}
-  <h3>Amendments
-  <button type="button" class="mini ui button" onclick="return downloadSummary('payrunAmendments','{{date_to}}-amendments.csv')">Download CSV</button>
-  </h3>
-  <div id="payrunAmendments"></div>
-  <p>
-    <a href="javascript:resetAmendCheckboxes()">Clear/Toggle amendments</a>
-  </p>
-  <p>
-    <div class="ui labeled button" tabindex="0">
-      <button class="ui button" id="amend-button" onclick="return doAmendLines()">
-        <i class="pencil alternate icon"></i> Amend Lines
-      </button>
-      <span class="ui basic label" id="lines-to-amend">0</span>
-    </div>
-  </p>
-
-  <div id="amendment-results"></div>
-  {% endif %}
-</script>
-
-<script id="amendResultsTemplate" type="text/x-handlebars-template">
-  <p>
-    To get the finalized summary data, please recalculate the Timesheet Completion
-    script using the button on the "Overview" tab. Doing so will update all the
-    hours to the changed values with appropriate earnings in place.
-  <p>
-  <table class="ui celled table" id="payslipList">
-    <tbody>
-      {% for id,line in lines %}
-        <tr>
-          <td>{{line.date}}</td>
-          <td>{{line.amendment.emp_name}}</td>
-          <td>{{line.amendment.emp_code}}</td>
-          <td>{{line.name}}</td>
-          <td>{{line.unit_amount}}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</script>
-
-
-{% endraw %}
-
   </head>
 
   <body>
@@ -251,11 +16,11 @@
       <i class="grid layout icon"></i>
     </div>
     <a href="/" class="header item">
-      Timesheet Completion
+      Header Item
     </a>
 
     <a href="/terminal" class="header item">
-      Payroll Analytics
+      Terminal
     </a>
     <div class="right menu">
       <div id="notification-applet-icon" class="link icon item">
@@ -272,55 +37,22 @@
   <div class="ui grid">
     <div class="centered eight wide column">
       <h1 class="ui center aligned icon header" style="padding: 1em 0 0 0;">
-        Timesheet Completion
+        Sample Website
       </h1>
     </div>
   </div>
 
   <div class="ui container">
-
-    <form>
-      <div class="form-group">
-      <div class="ui fluid search selection dropdown">
-        <div class="text">Please choose a payrun to complete</div>
-        <i class="dropdown icon"></i>
-        <div class="menu">
-          {% for zpr_rec in zpr_recs %}
-          <div class="item" data-value="{{zpr_rec.id}}">
-              {{zpr_rec.run_period_combined}}:
-              {{ zpr_rec.date_from}} - {{zpr_rec.date_to}}
-              : {{zpr_rec.state}}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div id="payrunContainer" style="display:none;margin-top:10px">
-        <div class="ui top attached tabular menu">
-          <a class="active item" data-tab="payrunOverview">Overview</a>
-          <a class="item" data-tab="payrunDetails">Details</a>
-        </div>
-        <div class="ui bottom attached active tab segment" data-tab="payrunOverview">
-          <div id="payslipListContainer"></div>
-        </div>
-        <div class="ui bottom attached tab segment" data-tab="payrunDetails">
-          <div id="payrunDetails">Nothing until calculations are complete.</div>
-        </div>
-      </div>
-
-    </form>
-
   </div>
 
   <div id="modalScreen" class="ui fullscreen modal">
-    <div class="header">Header</div>
-    <div class="content">
-        Something goes here?
-    </div>
+    <div class="header">Model Header</div>
+    <div class="content">Model Content</div>
   </div>
 
   <script type="text/javascript" src="/static/main.js"></script>
   <script type="text/javascript">
+    initMainIndex();
   </script>
 
   </body>

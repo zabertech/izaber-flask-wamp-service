@@ -19,7 +19,7 @@ authenticator = None
 cookie_authenticator = None
 
 wamp_connections = {}
-# Seems like wamp_connections is a hash of
+# wamp_connections is a hash of
 #
 # wamp_connections = {
 #     username: zerp_wamp connection instance
@@ -32,13 +32,14 @@ class IDEAuthenticator(SimpleTicketAuthenticator):
         super(IDEAuthenticator,self).__init__({})
 
     def request_ticket_authenticate(self,realm,username,password,cookie_value):
+
         # Check by connecting to Nexus
         try:
             user_wamp = izaber.wamp.WAMP(
                         url = config.wamp.connection.url,
                         username = username,
                         password = password,
-                        uri_base = 'com.izaber.wamp',
+                        uri_base = 'com.izaber.wamp.osso',
                         realm = 'izaber',
                     ).run()
             # if we have a wamp connection, we can then
@@ -71,6 +72,22 @@ class IDEAuthenticator(SimpleTicketAuthenticator):
         return auth
 
 
+def get_zerp_flask():
+    """ Returns the information related to the current session's
+        logins status
+    """
+    # If we can find a session, then let's use it
+    cookie_value = request.cookies.get(app.cookie_name)
+    if not cookie_value:
+        return
+
+    # Get a list of all the payroll runs
+    authid = session.get('role',{}).get('authid',None)
+    if not authid:
+        return
+
+    return session
+
 ###########################################################################
 # Webserver API
 ###########################################################################
@@ -89,6 +106,26 @@ def echo(data):
 @wamp.subscribe('hellos')
 def hellos(data):
     print("Received subscribed message:", data.dump())
+
+###########################################################################
+# Activity thread
+###########################################################################
+
+def time_publisher():
+    """ Publishes a simple date stamp to the uri
+        'com.izaber.wamp.osso.time' every second
+    """
+    while True:
+        time_str = datetime.datetime.now().isoformat()
+        wamp.publish(
+            'com.izaber.wamp.osso.time',
+            [time_str]
+        )
+        time.sleep(1)
+
+###########################################################################
+# App basics
+###########################################################################
 
 def app_initialize():
     global authenticator
@@ -110,8 +147,11 @@ def app_initialize():
     authorizer = WAMPAuthorizeUsersEverything('*')
     app.authorizers.append(authorizer)
 
+    # Start the publisher threads
+    time_thread = threading.Thread(
+                            target=time_publisher,
+                        )
+    time_thread.daemon = True
+    time_thread.start()
 
-if __name__ == '__main__':
-    initialize('example',environment='debug')
-    print("Running")
-    app.run()
+
