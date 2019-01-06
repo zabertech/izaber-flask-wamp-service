@@ -209,3 +209,7 @@ Thumbs.db
 
 static/bundle
 src/static/bundle
+
+osso.yaml
+
+*.swp

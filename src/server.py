@@ -22,34 +22,22 @@ wamp_connections = {}
 # wamp_connections is a hash of
 #
 # wamp_connections = {
-#     username: zerp_wamp connection instance
+#     username: connection instance
 # }
 #
 
-class IDEAuthenticator(SimpleTicketAuthenticator):
+class OSSOAuthenticator(SimpleTicketAuthenticator):
     def __init__(self):
         # We're going to try and authenticate off of Zerp
-        super(IDEAuthenticator,self).__init__({})
+        super(OSSOAuthenticator,self).__init__({})
 
     def request_ticket_authenticate(self,realm,username,password,cookie_value):
+        """ This is called when a user attempts to authenticate themselves
+            via the ticket mechanism (AKA. username/password).
+        """
 
-        # Check by connecting to Nexus
         try:
-            user_wamp = izaber.wamp.WAMP(
-                        url = config.wamp.connection.url,
-                        username = username,
-                        password = password,
-                        uri_base = 'com.izaber.wamp.osso',
-                        realm = 'izaber',
-                    ).run()
-            # if we have a wamp connection, we can then
-            # build it into a Zerp connection
-            user_zerp = izaber.wamp.zerp.ZERP(
-                            wamp=user_wamp,
-                            database=config.wamp.zerp.database,
-                        )
-
-            wamp_connections[username] = user_zerp
+            wamp_connections[username] = True
         except Exception as ex:
             # Nope, not logged in
             return None
@@ -72,9 +60,9 @@ class IDEAuthenticator(SimpleTicketAuthenticator):
         return auth
 
 
-def get_zerp_flask():
+def get_auth_data():
     """ Returns the information related to the current session's
-        logins status
+        logins status. 
     """
     # If we can find a session, then let's use it
     cookie_value = request.cookies.get(app.cookie_name)
@@ -88,16 +76,67 @@ def get_zerp_flask():
 
     return session
 
+def is_logged_in():
+    """ Returns a truthy value
+    """
+    return get_auth_data()
+
+def authenticated_only(f):
+    def f_authenticated_only(*args,**kwargs):
+        if not is_logged_in():
+            return redirect(
+                        url_for('server.login',
+                        _scheme=config.flask.scheme,
+                        _external=True
+                      ))
+        return f(*args,**kwargs)
+    return f_authenticated_only
+
 ###########################################################################
 # Webserver API
 ###########################################################################
 
 blueprint = IZaberFlask(__name__)
 
-@blueprint.route('/')
+@blueprint.route('/',endpoint='index',methods=['POST','GET'])
+@authenticated_only
 def route_index():
     tags = {}
     return render_template('index.html',**tags)
+
+@blueprint.route('/login',endpoint='login',methods=['POST','GET'])
+def login_page():
+    tags = {}
+
+    # Ensure we have a cookie set if one hasn't been created yet
+    cookie_value = request.cookies.get(app.cookie_name)
+    set_cookie_value = None
+    if not cookie_value:
+        cookie_value = secure_rand()
+        set_cookie_value = cookie_value
+
+    # Check if the user is trying to login
+    login = request.form.get('login')
+    response = None
+    if login:
+        password = request.form.get('password')
+        auth = authenticator.request_ticket_authenticate('izaber',login,password,cookie_value)
+        if auth:
+            session['role'] = auth
+            response = redirect(url_for('server.index',_scheme=config.flask.scheme,_external=True))
+            tokens[cookie_value] = auth
+
+    # If we didn't login successfully, response is None
+    if response is None:
+        response = render_template('login.html',**tags)
+
+    # And create the response that will be sent to the user
+    resp = make_response(response)
+    if set_cookie_value:
+        resp.set_cookie(app.cookie_name,set_cookie_value)
+
+    return resp
+
 
 @wamp.register('echo')
 def echo(data):
@@ -116,18 +155,28 @@ def time_publisher():
         'com.izaber.wamp.osso.time' every second
     """
     while True:
-        time_str = datetime.datetime.now().isoformat()
+        now = datetime.datetime.now()
+        time_str = now.strftime('%Y-%m-%d %H:%M:%S')
         wamp.publish(
             'com.izaber.wamp.osso.time',
-            [time_str]
+            kwargs={
+              'time_str': time_str,
+              'iso_str': now.isoformat(),
+              'H': now.hour,
+              'M': now.minute,
+              'S': now.second,
+              'Y': now.year,
+              'm': now.month,
+              'd': now.second
+            }
         )
         time.sleep(1)
 
 ###########################################################################
-# App basics
+# App Core
 ###########################################################################
 
-def app_initialize():
+def app_initialize(config=None,environment=None,):
     global authenticator
     global cookie_authenticator
 
@@ -135,15 +184,20 @@ def app_initialize():
     # to ZERP as we use the connected user's credentials
     izaber.wamp.AUTORUN = False
 
-    #initialize('izaber-wamp',environment='live')
-    #initialize('izaber-wamp',environment='debug')
-    initialize('izaber-wamp')
+    initialize(
+        'osso',
+        config=config or {},
+        environment=environment
+    )
 
-    authenticator = IDEAuthenticator()
+		# We use a custom authenticator so we can pull
+    # usernames/passwords out of the osso.yaml file
+    authenticator = OSSOAuthenticator()
     cookie_authenticator = CookieAuthenticator()
     app.authenticators.append(authenticator)
     app.authenticators.append(cookie_authenticator)
 
+    # We don't restrict routes for logged in users
     authorizer = WAMPAuthorizeUsersEverything('*')
     app.authorizers.append(authorizer)
 
@@ -154,4 +208,11 @@ def app_initialize():
     time_thread.daemon = True
     time_thread.start()
 
+@wamp.wamp_connect()
+def wamp_connect(client):
+    session_id = client.session_id
+
+@wamp.wamp_disconnect()
+def wamp_disconnect(client):
+    session_id = client.session_id
 

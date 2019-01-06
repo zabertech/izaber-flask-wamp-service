@@ -1,0 +1,10 @@
+default:
+  debug: false
+  log:
+      level: 100
+  email:
+      from: test@zaber.com
+      host: localhost
+
+
+

@@ -35,28 +35,29 @@ function initWAMP () {
                         });
 
     connection.onclose = function (reason, details) {
-      console.log("disconnected", reason, details.reason, details);
-      let div = document.getElementById('onclose');
-      div.innerHTML = details.reason;
-    }
+        console.log("disconnected", reason, details.reason, details);
+        let div = document.getElementById('onclose');
+        div.innerHTML = details.reason;
+    };
+
+    connection.onopen = function (session) {
+        session.subscribe(
+            'com.izaber.wamp.osso.time',
+            handlerTimeEvent
+        );
+    };
 }
 
 function handlerTimeEvent(args, kwargs, details) {
 // --------------------------------------------------
-    console.log(args,kwargs,details);
+    var d = new Date(kwargs['iso_str']);
+    var t = document.getElementById('dashboard-time');
+    t.innerHTML = d.toLocaleTimeString()
 }
 
 function initMainIndex() {
 // --------------------------------------------------
     initWAMP();
-
-    connection.onopen = function (session) {
-      session.subscribe(
-        'com.izaber.wamp.payroll.activity',
-        onPayrollActivity
-      );
-    };
-
     connection.open();
 }
 
