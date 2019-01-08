@@ -49,8 +49,6 @@ window.autobahn = require('autobahn');
 // https://fullcalendar.io/
 import 'fullcalendar';
 
-// Font awesome support
-
 // Terminal emulator widget!
 // https://xtermjs.org/docs/guides/import/
 import { Terminal } from 'xterm';
@@ -63,8 +61,22 @@ Terminal.applyAddon(window.fit);
 window.Split = require('split.js');
 
 // Ace Editor
-window.Ace = require('ace-builds/src-noconflict/ace');
+window.ace = require('ace-builds/src-noconflict/ace');
+
+// Also required by ace. Otherwise some complaints appear when trying to
+// load modules
+window.define = window.define || ace.define;
+window.require = window.require || ace.require;
 window.modelist = require('ace-builds/src-noconflict/ext-modelist.js');
+
+// Use local files rather than bundle
+const CDN = '/static/ace';
+
+// Now we tell ace to use the CDN locations to look for files
+ace.config.set('basePath', CDN);
+ace.config.set('modePath', CDN);
+ace.config.set('themePath', CDN);
+ace.config.set('workerPath', CDN);
 
 // Cookie handling
 // https://github.com/js-cookie/js-cookie

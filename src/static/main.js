@@ -17,6 +17,8 @@ function onchallenge(session, method, extra) {
     }
 }
 
+var connection;
+
 function initWAMP () {
 // --------------------------------------------------
     console.log("Location protocol is:", location.protocol);
@@ -48,11 +50,12 @@ function initWAMP () {
     };
 }
 
+var currentTime;
 function handlerTimeEvent(args, kwargs, details) {
 // --------------------------------------------------
-    var d = new Date(kwargs['iso_str']);
+    currentTime = new Date(kwargs['iso_str']);
     var t = document.getElementById('dashboard-time');
-    t.innerHTML = d.toLocaleTimeString()
+    t.innerHTML = currentTime.toLocaleTimeString()
 }
 
 function initMainIndex() {
