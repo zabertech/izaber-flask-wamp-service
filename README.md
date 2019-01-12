@@ -22,7 +22,7 @@ On the front end, autobahn.js is through a webpack bundled javascript package.
 
 After cloning the repository, execute the script:
 
-`./env-setup.sh`
+`./scripts/env-setup.sh`
 
 What this will do is:
 * ensure repo is up to date
