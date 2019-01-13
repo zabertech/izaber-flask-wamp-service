@@ -160,14 +160,6 @@ def logout_page():
     resp.delete_cookie(app.cookie_name)
     return resp
 
-@wamp.register('echo')
-def echo(data):
-    return data+" RESPONSE!"
-
-@wamp.subscribe('hellos')
-def hellos(data):
-    print("Received subscribed message:", data.dump())
-
 ###########################################################################
 # Activity thread
 ###########################################################################
@@ -193,6 +185,60 @@ def time_publisher():
             }
         )
         time.sleep(1)
+
+###########################################################################
+# WAMP routes
+###########################################################################
+
+# Used to track currently running shell subprocesses
+SHELL_SESSIONS = {}
+
+@wamp.wamp_connect()
+def wamp_connect(client):
+    session_id = client.session_id
+
+@wamp.wamp_disconnect()
+def wamp_disconnect(client):
+    session_id = client.session_id
+    if session_id in SHELL_SESSIONS:
+        SHELL_SESSIONS[session_id].shutdown()
+        del SHELL_SESSIONS[session_id]
+
+@wamp.register('com.izaber.wamp.osso.shell.execute')
+def wamp_shell_execute(invoke_message,command):
+    session_id = invoke_message.details['caller']
+    if session_id in SHELL_SESSIONS:
+        SHELL_SESSIONS[session_id].shutdown()
+        del SHELL_SESSIONS[session_id]
+    shell_command = ShellCommand(
+                        command=command,
+                        session_id=session_id,
+                        wamp=wamp,
+                        uri='com.izaber.wamp.osso.shell',
+                    )
+    print("HI? for ",session_id,shell_command)
+    SHELL_SESSIONS[session_id] = shell_command
+    shell_command.start()
+    return {
+        'status': 'OK',
+        'uri': {
+            'stdout': shell_command.uri_stdout,
+            'stdin': shell_command.uri_stdin,
+        },
+    }
+
+
+@wamp.subscribe('com.izaber.wamp.osso.shell.stdin.**')
+def wamp_shell_input(event):
+    session_id = int(event.details['topic'].split('.')[-1])
+    key = event.args[0]
+    print("INPUT",key)
+
+    session = SHELL_SESSIONS.get(session_id)
+    if session:
+        os.write(session.master_fd, key.encode())
+    else:
+        pass
 
 ###########################################################################
 # App Core
@@ -229,12 +275,4 @@ def app_initialize(config=None,environment=None,):
                         )
     time_thread.daemon = True
     time_thread.start()
-
-@wamp.wamp_connect()
-def wamp_connect(client):
-    session_id = client.session_id
-
-@wamp.wamp_disconnect()
-def wamp_disconnect(client):
-    session_id = client.session_id
 

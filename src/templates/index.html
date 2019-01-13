@@ -58,6 +58,64 @@
 
     <!-- Kitchen Sink Example -->
 
+    <h2><a href="https://xtermjs.org/">xTerm.js</a></h2>
+    <div id="xterm" style="height:400;width:600"></div>
+    <script>
+      function u_atob(ascii) {
+      // pinched from: https://stackoverflow.com/a/43271130
+          return new TextDecoder().decode(Uint8Array.from(atob(ascii), c => c.charCodeAt(0)));
+      }
+
+      function initTerminal(command) {
+      // --------------------------------------------------
+          initWAMP();
+
+          class MyTerm extends Terminal {
+          };
+
+          var term = new MyTerm({
+                          cursorBlink: true,
+                          cursorStyle: 'block',
+                      });
+          var termContainer = document.getElementById('xterm');
+          term.open(termContainer);
+
+          connection.onopen = function (session) {
+            window.session = session;
+            sessionID = session.id;
+
+            term.fit();
+
+            session.subscribe(
+              'com.izaber.wamp.osso.shell.stdout.'+sessionID,
+              (args) => {
+                let data = u_atob(args[0]);
+                term.write(data);
+              }
+            );
+
+            console.log("Running command:", command);
+            connection.session.call('com.izaber.wamp.osso.shell.execute',[command]).then(
+                results => {
+
+                  console.log("RESULTS FROM INVOKE:", results);
+
+                  // Term -> Server App
+                  term._core.register(term.addDisposableListener('data', function (data, ev) {
+                    // term.write(data);
+                    session.publish(results.uri.stdin,[data])
+                  }));
+
+                }
+            );
+          };
+
+          term.fit();
+      }
+    </script>
+
+
+
     <h2><a href="http://animejs.com/documentation/">Chart.js</a></h2>
     <canvas id="chartjs-chart" width="800" height="450"></canvas>
     <script>
@@ -427,7 +485,8 @@
   </div>
 
   <script type="text/javascript">
-      initMainIndex();
+      initTerminal('/bin/bash');
+      initConnection();
   </script>
 
   </body>

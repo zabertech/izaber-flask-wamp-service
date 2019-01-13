@@ -19,8 +19,11 @@ function onchallenge(session, method, extra) {
 
 var connection;
 
+var wampAlreadyInitialized = false;
 function initWAMP () {
 // --------------------------------------------------
+    if ( wampAlreadyInitialized ) return;
+    wampAlreadyInitialized = true;
     console.log("Location protocol is:", location.protocol);
     console.log("Connecting to ",websocketURL);
     connection = new autobahn.Connection({
@@ -58,7 +61,7 @@ function handlerTimeEvent(args, kwargs, details) {
     t.innerHTML = currentTime.toLocaleTimeString()
 }
 
-function initMainIndex() {
+function initConnection() {
 // --------------------------------------------------
     initWAMP();
     connection.open();
