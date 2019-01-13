@@ -6,6 +6,11 @@ window.d3 = require('d3');
 // http://nvd3.org/
 window.nvd3 = require('nvd3');
 
+// Chart.js the standard charting library
+// https://www.chartjs.org/docs/latest/
+import Chart from 'chart.js';
+window.Chart = Chart;
+
 // Does this need introduction? No? Good.
 window.jQuery = require('jquery');
 window.$ = require('jquery');

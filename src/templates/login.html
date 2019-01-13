@@ -66,6 +66,11 @@
         Please log-in to your account
       </div>
     </h2>
+    {% if error %}
+      <div class="ui inverted red segment">
+        <p>{{error}}</p>
+      </div>
+    {% endif %}
     <form class="ui large form" action="/login" method="post">
       <div class="ui stacked segment">
         <div class="field">

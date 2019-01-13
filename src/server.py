@@ -37,7 +37,19 @@ class OSSOAuthenticator(SimpleTicketAuthenticator):
         """
 
         try:
-            wamp_connections[username] = True
+            users = config.osso.users.dict()
+
+            # Validate user existance
+            if username not in users:
+                raise Exception('Invalid Login')
+
+            # Validate that password matches
+            user_rec = users[username]
+            if password != user_rec['password']:
+                raise Exception('Invalid Login')
+
+            wamp_connections[username] = user_rec
+
         except Exception as ex:
             # Nope, not logged in
             return None
@@ -121,7 +133,9 @@ def login_page():
     if login:
         password = request.form.get('password')
         auth = authenticator.request_ticket_authenticate('izaber',login,password,cookie_value)
-        if auth:
+        if not auth:
+            tags['error'] = 'Invalid Login'
+        else:
             session['role'] = auth
             response = redirect(url_for('server.index',_scheme=config.flask.scheme,_external=True))
             tokens[cookie_value] = auth
@@ -137,6 +151,14 @@ def login_page():
 
     return resp
 
+@blueprint.route('/logout')
+def logout_page():
+    if '__token' in session:
+        del session['__token']
+    tags = {}
+    resp = make_response(render_template('login.html',**tags))
+    resp.delete_cookie(app.cookie_name)
+    return resp
 
 @wamp.register('echo')
 def echo(data):

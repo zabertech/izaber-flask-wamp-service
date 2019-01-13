@@ -26,6 +26,13 @@ if __name__ == '__main__':
         environment=args['-e'],
         config=config_args
     )
+
+    # If the demo mode is on, let's show the user login information
+    if config.demo:
+        print("As this is in demo mode in osso.yaml, we're printing the user/pass")
+        for username,user_data in config.osso.users.dict().items():
+            print("{u}: '{d[password]}'".format(u=username,d=user_data))
+
     blueprint.run(
         host=args['--host'] or config.flask.host,
         port=int(args['--port'] or config.flask.port),

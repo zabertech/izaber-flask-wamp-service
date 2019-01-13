@@ -8,14 +8,13 @@
         padding-bottom: .5em;
       }
 
-
-    #editor { 
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-    }
+      #editor { 
+          position: absolute;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          left: 0;
+      }
 
     </style>
   </head>
@@ -58,6 +57,31 @@
   <div class="ui container">
 
     <!-- Kitchen Sink Example -->
+
+    <h2><a href="http://animejs.com/documentation/">Chart.js</a></h2>
+    <canvas id="chartjs-chart" width="800" height="450"></canvas>
+    <script>
+      $(document).ready(function() {
+        var arf = new Chart(document.getElementById("chartjs-chart"), {
+            type: 'pie',
+            data: {
+              labels: ["A part of the pie", "Not a part of the pie"],
+              datasets: [{
+                label: "Unitas!",
+                backgroundColor: ["#eeffee","#ffffff"],
+                data: [1000,100]
+              }]
+            },
+            options: {
+              title: {
+                display: true,
+                text: 'Some title here'
+              }
+            }
+        });
+      });
+    </script>
+
 
     <h2><a href="http://animejs.com/documentation/">Anime.js</a></h2>
     <div id="clock">

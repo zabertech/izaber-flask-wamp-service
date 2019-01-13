@@ -1,5 +1,6 @@
 default:
-  debug: false
+  debug: true
+  demo: true
   log:
       level: 100
   email:
@@ -18,6 +19,8 @@ default:
       users:
           admin:
               password: '{{rand_hex(5)}}'
+              admin: true
           user:
               password: '{{rand_hex(5)}}'
+              admin: false
 
