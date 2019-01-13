@@ -216,7 +216,6 @@ def wamp_shell_execute(invoke_message,command):
                         wamp=wamp,
                         uri='com.izaber.wamp.osso.shell',
                     )
-    print("HI? for ",session_id,shell_command)
     SHELL_SESSIONS[session_id] = shell_command
     shell_command.start()
     return {
@@ -232,7 +231,6 @@ def wamp_shell_execute(invoke_message,command):
 def wamp_shell_input(event):
     session_id = int(event.details['topic'].split('.')[-1])
     key = event.args[0]
-    print("INPUT",key)
 
     session = SHELL_SESSIONS.get(session_id)
     if session:
