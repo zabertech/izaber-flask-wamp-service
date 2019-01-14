@@ -80,7 +80,10 @@
           var termContainer = document.getElementById('xterm');
           term.open(termContainer);
 
+          var oldOnOpen = connection.onopen;
+
           connection.onopen = function (session) {
+            oldOnOpen(session);
             window.session = session;
             sessionID = session.id;
 
