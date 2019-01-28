@@ -119,6 +119,80 @@
 
 
 
+    <h2><a href="http://showdownjs.com/">Showdown.js</a></h2>
+    <textarea id="sourceTA" rows="10" cols="82">
+Showdown Tutorial
+=================
+
+This is a showdown tutorial. 
+
+Showdown supports a number of cool features, namely:
+
+  - headers 
+  - lists
+  - and other stuff too
+  
+It is also possible to include code:
+
+    var foo = 'bar';
+    
+    var baz = {
+      markdown: 'is great',
+      showdown: 'is awesome'
+    }
+
+Don't forget to check the [extensions wiki][1].
+
+[1]: https://github.com/showdownjs/showdown/wiki/extensions
+    </textarea>
+    <hr/>
+    <button id="runBtn" onClick="showDownRun()">Convert</button>
+    <hr/>
+    <div id="targetDiv"></div>
+    <script>
+
+			function showDownRun() {
+				var text = document.getElementById('sourceTA').value,
+						target = document.getElementById('targetDiv');
+						
+						showdown.extension('highlight', function () {
+						return [{
+							type: "output",
+							filter: function (text, converter, options) {
+								var left = "<pre><code\\b[^>]*>",
+										right = "</code></pre>",
+										flags = "g";
+								var replacement = function (wholeMatch, match, left, right) {
+									var lang = (left.match(/class=\"([^ \"]+)/) || [])[1];
+									left = left.slice(0, 18) + 'hljs ' + left.slice(18);
+									if (lang && hljs.getLanguage(lang)) {
+										return left + hljs.highlight(lang, match).value + right;
+									} else {
+										return left + hljs.highlightAuto(match).value + right;
+									}
+								};
+								return showdown.helper.replaceRecursiveRegExp(text, replacement, left, right, flags);
+							}
+						}];
+						});
+						
+						converter = new showdown.Converter({extensions:['highlight']});
+						converter.setOption('tables', 'true');
+						converter.setOption('tasklists', 'true');
+						converter.setOption('smoothLivePreview', 'true');
+						// converter.setOption('', 'true');
+
+						html = converter.makeHtml(text);
+					
+					target.innerHTML = html;
+			}
+
+      $(document).ready(function() {
+					showDownRun();
+      });
+    </script>
+
+
     <h2><a href="http://animejs.com/documentation/">Chart.js</a></h2>
     <canvas id="chartjs-chart" width="800" height="450"></canvas>
     <script>
@@ -204,7 +278,6 @@
       })
 
     </script>
-
 
     <h2><a href="http://nvd3.org/">NVD3</a></h2>
     <div id="chart"><svg style="width:600px;height:400px"></svg></div>

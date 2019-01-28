@@ -38,7 +38,15 @@ window.download = require('downloadjs');
 window.nunjucks = require('nunjucks');
 
 // Another template engine. Good, fast, infuriatingly purist about logic in templates
-window.Handlebars = require("handlebars");
+window.Handlebars = require('handlebars');
+
+// Converts markdown to HTML
+window.showdown = require('showdown');
+
+// Support for automatic syntax highlight in HTML
+import hljs from 'highlight.js';
+window.hljs = hljs;
+import 'highlight.js/styles/github.css';
 
 // Promise based HTTP client for the browser and node.js
 // https://github.com/axios/axios
