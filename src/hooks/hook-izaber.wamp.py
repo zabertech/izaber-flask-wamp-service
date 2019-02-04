@@ -1,0 +1,1 @@
+hiddenimports = ['izaber_wamp']

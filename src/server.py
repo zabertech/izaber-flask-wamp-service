@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import sys
-sys.path.append('libs')
+from gevent import monkey
+monkey.patch_all()
 
 from osso import *
 
